@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using Mirror;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -12,7 +13,7 @@ namespace EasySurvivalScripts
         Jumping
     }
 
-    public class PlayerMovement : MonoBehaviour
+    public class PlayerMovement : NetworkBehaviour
     {
         public PlayerStates playerStates;
 
@@ -71,35 +72,38 @@ namespace EasySurvivalScripts
 
         void HandlePlayerControls()
         {
-            float hInput = Input.GetAxisRaw(HorizontalInput);
-            float vInput = Input.GetAxisRaw(VerticalInput);
-
-            Vector3 fwdMovement = characterController.isGrounded == true ? transform.forward * vInput : Vector3.zero;
-            Vector3 rightMovement = characterController.isGrounded == true ? transform.right * hInput : Vector3.zero;
-
-            float _speed = Input.GetButton(RunInput) ? runSpeed : walkSpeed;
-            characterController.SimpleMove(Vector3.ClampMagnitude(fwdMovement + rightMovement, 1f) * _speed);
-
-            if (characterController.isGrounded)
-                Jump();
-
-            //Managing Player States
-            if (characterController.isGrounded)
+            if (isLocalPlayer)
             {
-                if (hInput == 0 && vInput == 0)
-                    playerStates = PlayerStates.Idle;
-                else
-                {
-                    if (_speed == walkSpeed)
-                        playerStates = PlayerStates.Walking;
-                    else
-                        playerStates = PlayerStates.Running;
+                float hInput = Input.GetAxisRaw(HorizontalInput);
+                float vInput = Input.GetAxisRaw(VerticalInput);
 
-                    _footstepDelay = (2/_speed);
+                Vector3 fwdMovement = characterController.isGrounded == true ? transform.forward * vInput : Vector3.zero;
+                Vector3 rightMovement = characterController.isGrounded == true ? transform.right * hInput : Vector3.zero;
+
+                float _speed = Input.GetButton(RunInput) ? runSpeed : walkSpeed;
+                characterController.SimpleMove(Vector3.ClampMagnitude(fwdMovement + rightMovement, 1f) * _speed);
+
+                if (characterController.isGrounded)
+                    Jump();
+
+                //Managing Player States
+                if (characterController.isGrounded)
+                {
+                    if (hInput == 0 && vInput == 0)
+                        playerStates = PlayerStates.Idle;
+                    else
+                    {
+                        if (_speed == walkSpeed)
+                            playerStates = PlayerStates.Walking;
+                        else
+                            playerStates = PlayerStates.Running;
+
+                        _footstepDelay = (2 / _speed);
+                    }
                 }
+                else
+                    playerStates = PlayerStates.Jumping;
             }
-            else
-                playerStates = PlayerStates.Jumping;
         }
 
         void Jump()
